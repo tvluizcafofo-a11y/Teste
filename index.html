@@ -3,79 +3,168 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#0f1115">
+<meta name="theme-color" content="#ffffff">
 <title>BarScan — Leitor de Código de Barras</title>
 <style>
-:root{--bg:#0f1115;--card:#181c23;--card2:#20252e;--line:#2c3340;--txt:#e9edf3;--muted:#93a0b4;--accent:#ffb703;--accent2:#00d1a0;--danger:#ff5c5c;--ok:#2ecc71;--r:14px}
+:root{
+  --bg:#f4f6fa;
+  --card:#ffffff;
+  --card2:#eef2f8;
+  --line:#d5dce6;
+  --txt:#111827;
+  --muted:#5b6472;
+  --accent:#e85d04;
+  --accent2:#0f8a5f;
+  --danger:#c92a2a;
+  --blue:#1c64d1;
+  --r:12px;
+}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
-body{background:var(--bg);color:var(--txt);padding-bottom:40px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:15px;line-height:1.45}
-.top{position:sticky;top:0;z-index:50;background:linear-gradient(180deg,#181c23,#14181f);border-bottom:1px solid var(--line);padding:12px 14px 10px}
+body{
+  background:var(--bg);color:var(--txt);padding-bottom:40px;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  font-size:16px;line-height:1.5;
+}
+.top{
+  position:sticky;top:0;z-index:50;
+  background:#ffffff;border-bottom:2px solid var(--line);
+  padding:12px 14px 10px;box-shadow:0 2px 6px rgba(0,0,0,.04);
+}
 .brand{display:flex;align-items:center;gap:12px}
-.logo{font-size:26px;width:46px;height:46px;display:grid;place-items:center;background:linear-gradient(135deg,#ffb703,#ff8a00);border-radius:14px;box-shadow:0 4px 14px rgba(255,183,3,.25)}
-.brand h1{margin:0;font-size:19px}.brand p{margin:0;font-size:11.5px;color:var(--muted)}
+.logo{
+  font-size:26px;width:48px;height:48px;display:grid;place-items:center;
+  background:#fff3e0;border:2px solid #ffb703;border-radius:14px
+}
+.brand h1{margin:0;font-size:20px;color:#111827}
+.brand p{margin:0;font-size:12px;color:var(--muted)}
 .stats{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-.stat{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:5px 10px;font-size:11.5px;color:var(--muted)}
-.stat b{color:var(--txt);font-size:13px}
+.stat{
+  background:var(--card2);border:1px solid var(--line);border-radius:8px;
+  padding:5px 10px;font-size:12px;color:var(--muted)
+}
+.stat b{color:#111827;font-size:14px}
 main{padding:14px;max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;box-shadow:0 2px 12px rgba(0,0,0,.25)}
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.05)
+}
 .card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px}
-.card-head h2{margin:0;font-size:15px;font-weight:600}
-.pill{background:var(--card2);border:1px solid var(--line);color:var(--muted);font-size:11px;padding:3px 9px;border-radius:999px;white-space:nowrap}
-.pill.on{color:var(--accent2);border-color:rgba(0,209,160,.4);background:rgba(0,209,160,.08)}
-.pill.off{color:var(--danger);border-color:rgba(255,92,92,.35);background:rgba(255,92,92,.08)}
-.reader{width:100%;min-height:240px;background:#0b0d11;border-radius:12px;overflow:hidden;border:1px solid var(--line);display:grid;place-items:center;color:var(--muted);font-size:13px;text-align:center;position:relative}
+.card-head h2{margin:0;font-size:16px;color:#111827;font-weight:700}
+.pill{
+  background:var(--card2);border:1px solid var(--line);color:var(--muted);
+  font-size:12px;padding:3px 10px;border-radius:999px;white-space:nowrap;font-weight:600
+}
+.pill.on{color:#0f8a5f;border-color:#0f8a5f;background:#e6f7f0}
+.pill.off{color:#c92a2a;border-color:#c92a2a;background:#fdecec}
+.reader{
+  width:100%;min-height:250px;background:#f0f2f6;border-radius:12px;
+  overflow:hidden;border:2px dashed var(--line);display:grid;place-items:center;
+  color:var(--muted);font-size:14px;text-align:center;position:relative
+}
 .reader video{width:100%!important;height:100%!important;object-fit:cover;display:block}
-.reader .ph{padding:34px 16px}
-.reader .ph span{font-size:34px;display:block;margin-bottom:8px;opacity:.6}
+.reader .ph{padding:30px 16px}
+.reader .ph span{font-size:40px;display:block;margin-bottom:8px}
 .row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .row>.input{flex:1;min-width:140px}
-.btn{appearance:none;border:1px solid var(--line);background:var(--card2);color:var(--txt);padding:11px 15px;border-radius:11px;font-size:13.5px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:.15s;white-space:nowrap;font-family:inherit}
-.btn:active{transform:scale(.97)}.btn:disabled{opacity:.38;cursor:not-allowed}
-.btn.primary{background:linear-gradient(135deg,#ffb703,#ff8a00);color:#1a1200;border-color:transparent}
-.btn.accent{background:linear-gradient(135deg,#00d1a0,#00a884);color:#001a14;border-color:transparent}
-.btn.danger{color:var(--danger);border-color:rgba(255,92,92,.35);background:rgba(255,92,92,.07)}
+.btn{
+  appearance:none;border:2px solid var(--line);background:var(--card2);color:var(--txt);
+  padding:12px 16px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  transition:.12s;white-space:nowrap;font-family:inherit
+}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.accent{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+.btn.blue{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn.danger{color:var(--danger);border-color:var(--danger);background:#fdecec}
 .btn.file{position:relative;overflow:hidden}
-.input{width:100%;background:#10141a;border:1px solid var(--line);color:var(--txt);padding:11px 13px;border-radius:11px;font-size:14px;font-family:inherit;outline:none}
+.input{
+  width:100%;background:#fff;border:2px solid var(--line);color:var(--txt);
+  padding:12px 14px;border-radius:10px;font-size:16px;font-family:inherit;outline:none
+}
 .input:focus{border-color:var(--accent)}
-select.input{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:34px}
+select.input{
+  appearance:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' fill='none' stroke='%235b6472' stroke-width='2'/></svg>");
+  background-repeat:no-repeat;background-position:right 14px center;padding-right:36px
+}
 .result-top{display:flex;gap:13px;align-items:flex-start}
-.thumb{width:76px;height:76px;flex:0 0 76px;border-radius:12px;background:var(--card2);border:1px solid var(--line);display:grid;place-items:center;font-size:30px;overflow:hidden;cursor:pointer}
+.thumb{
+  width:80px;height:80px;flex:0 0 80px;border-radius:12px;background:var(--card2);
+  border:2px solid var(--line);display:grid;place-items:center;font-size:32px;
+  overflow:hidden;cursor:pointer
+}
 .thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .res-info{flex:1;min-width:0}
-.res-info h3{margin:0 0 3px;font-size:17px;line-height:1.25;word-break:break-word}
-.res-info .cat{font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.6px;font-weight:700}
-.res-info .cod{font-size:11.5px;color:var(--muted);margin-top:5px;font-family:ui-monospace,Menlo,monospace;word-break:break-all}
-.res-price{font-size:20px;font-weight:800;color:var(--accent2);margin-top:6px}
-.notfound{border-color:rgba(255,92,92,.4);background:rgba(255,92,92,.06)}
-.tag{display:inline-block;background:var(--card2);border:1px solid var(--line);border-radius:7px;padding:2px 8px;font-size:11px;color:var(--muted);margin:4px 4px 0 0}
-.lista{display:flex;flex-direction:column;gap:7px;margin-top:10px}
-.item{display:flex;align-items:center;gap:10px;background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:8px 10px}
-.item .thumb{width:44px;height:44px;flex:0 0 44px;font-size:19px;border-radius:9px;cursor:default}
+.res-info h3{margin:0 0 4px;font-size:18px;line-height:1.25;color:#111827;word-break:break-word}
+.res-info .cat{font-size:12px;color:var(--accent);text-transform:uppercase;letter-spacing:.6px;font-weight:800}
+.res-info .cod{font-size:13px;color:var(--muted);margin-top:5px;font-family:ui-monospace,Menlo,monospace;word-break:break-all}
+.res-price{font-size:22px;font-weight:900;color:var(--accent2);margin-top:6px}
+.notfound{border-color:#c92a2a;background:#fdecec}
+.tag{
+  display:inline-block;background:var(--card2);border:1px solid var(--line);
+  border-radius:7px;padding:3px 9px;font-size:12px;color:#111827;margin:4px 4px 0 0;font-weight:600
+}
+.lista{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.item{
+  display:flex;align-items:center;gap:10px;background:var(--card2);
+  border:1px solid var(--line);border-radius:10px;padding:9px 10px
+}
+.item .thumb{width:48px;height:48px;flex:0 0 48px;font-size:20px;border-radius:9px;cursor:default}
 .item .info{flex:1;min-width:0}
-.item .nome{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.item .meta{font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:ui-monospace,Menlo,monospace}
-.item .price{font-size:13px;font-weight:700;color:var(--accent2);white-space:nowrap}
+.item .nome{font-size:14px;font-weight:700;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .meta{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:ui-monospace,Menlo,monospace}
+.item .price{font-size:14px;font-weight:800;color:var(--accent2);white-space:nowrap}
 .item .acts{display:flex;gap:4px}
-.icon-btn{background:transparent;border:1px solid var(--line);color:var(--muted);width:31px;height:31px;border-radius:9px;display:grid;place-items:center;cursor:pointer;font-size:14px;padding:0}
-.icon-btn:active{background:var(--card);transform:scale(.94)}
-.badge-custom{font-size:9px;background:rgba(0,209,160,.15);color:var(--accent2);border:1px solid rgba(0,209,160,.35);border-radius:5px;padding:1px 5px;margin-left:6px;vertical-align:middle;font-weight:700}
-.empty{text-align:center;color:var(--muted);padding:26px 10px;font-size:13px}
-.empty span{font-size:34px;display:block;margin-bottom:6px;opacity:.5}
-.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,140%);background:#262c37;border:1px solid var(--line);color:var(--txt);padding:11px 18px;border-radius:12px;font-size:13px;font-weight:600;z-index:200;transition:.3s cubic-bezier(.2,.9,.3,1.2);max-width:88vw;text-align:center;box-shadow:0 8px 26px rgba(0,0,0,.5)}
+.icon-btn{
+  background:#fff;border:1px solid var(--line);color:#111827;
+  width:34px;height:34px;border-radius:9px;display:grid;place-items:center;
+  cursor:pointer;font-size:15px;padding:0
+}
+.icon-btn:active{background:var(--card2);transform:scale(.94)}
+.badge-custom{
+  font-size:10px;background:#e6f7f0;color:var(--accent2);
+  border:1px solid var(--accent2);border-radius:5px;padding:1px 6px;margin-left:6px;
+  vertical-align:middle;font-weight:800
+}
+.empty{text-align:center;color:var(--muted);padding:26px 10px;font-size:14px}
+.empty span{font-size:38px;display:block;margin-bottom:6px}
+.toast{
+  position:fixed;left:50%;bottom:24px;transform:translate(-50%,140%);
+  background:#111827;color:#fff;
+  padding:12px 20px;border-radius:12px;font-size:14px;font-weight:700;
+  z-index:200;transition:.3s;max-width:88vw;text-align:center;
+  box-shadow:0 8px 26px rgba(0,0,0,.35)
+}
 .toast.show{transform:translate(-50%,0)}
-.toast.ok{border-color:rgba(0,209,160,.5)}.toast.err{border-color:rgba(255,92,92,.5)}
-.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:300;display:grid;place-items:center;padding:20px}
+.toast.ok{background:#0f8a5f}
+.toast.err{background:#c92a2a}
+.lightbox{
+  position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:300;
+  display:grid;place-items:center;padding:20px
+}
 .lightbox img{max-width:100%;max-height:85vh;border-radius:12px}
-.lightbox button{position:absolute;top:18px;right:18px;background:#262c37;color:#fff;border:1px solid #3a4250;width:42px;height:42px;border-radius:50%;font-size:19px;cursor:pointer}
-.note{font-size:11px;color:var(--muted);line-height:1.5;margin-top:10px}
-.hr{height:1px;background:var(--line);margin:12px 0}
-.diag{background:#10141a;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:11.5px;font-family:ui-monospace,Menlo,monospace;color:var(--muted);line-height:1.7;margin-top:8px}
-.diag .ok{color:var(--accent2)}.diag .bad{color:var(--danger)}.diag .warn{color:var(--accent)}
-.alerta{border-radius:11px;padding:11px 13px;font-size:12.5px;line-height:1.55;margin-top:10px;display:none}
+.lightbox button{
+  position:absolute;top:18px;right:18px;background:#fff;color:#111;
+  border:none;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer;font-weight:700
+}
+.note{font-size:13px;color:var(--muted);line-height:1.5;margin-top:10px}
+.hr{height:1px;background:var(--line);margin:14px 0}
+.diag{
+  background:#f0f2f6;border:1px solid var(--line);border-radius:10px;
+  padding:10px 12px;font-size:12.5px;font-family:ui-monospace,Menlo,monospace;
+  color:#334155;line-height:1.8;margin-top:10px
+}
+.diag .ok{color:#0f8a5f;font-weight:700}
+.diag .bad{color:#c92a2a;font-weight:700}
+.diag .warn{color:#e85d04;font-weight:700}
+.alerta{border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin-top:10px;display:none;font-weight:500}
 .alerta.show{display:block}
-.alerta.warn{background:rgba(255,183,3,.08);border:1px solid rgba(255,183,3,.4);color:#ffd166}
-.alerta.err{background:rgba(255,92,92,.08);border:1px solid rgba(255,92,92,.4);color:#ffb3b3}
+.alerta.warn{background:#fff3e0;border:2px solid #e85d04;color:#7a3300}
+.alerta.err{background:#fdecec;border:2px solid #c92a2a;color:#7a0f0f}
+.alerta.info{background:#e6f0fd;border:2px solid #1c64d1;color:#0d3a80}
 </style>
 </head>
 <body>
@@ -83,7 +172,10 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 <header class="top">
   <div class="brand">
     <div class="logo">🍺</div>
-    <div><h1>BarScan</h1><p>Leitor de código de barras • Bar &amp; Restaurante</p></div>
+    <div>
+      <h1>BarScan</h1>
+      <p>Leitor de código de barras • Bar &amp; Restaurante</p>
+    </div>
   </div>
   <div class="stats">
     <div class="stat">Base: <b id="statBase">0</b></div>
@@ -111,7 +203,7 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
       <button type="button" id="btnStart" class="btn primary">▶ Iniciar câmera</button>
       <button type="button" id="btnStop" class="btn" disabled>⏹ Parar</button>
       <button type="button" id="btnTorch" class="btn" disabled>🔦</button>
-      <label class="btn file">🖼️ Ler de imagem
+      <label class="btn blue file">🖼️ Ler de imagem
         <input type="file" id="fileInput" accept="image/*" hidden>
       </label>
     </div>
@@ -127,7 +219,7 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
   <section class="card" id="resultCard" hidden>
     <div class="card-head">
       <h2>🔎 Resultado da leitura</h2>
-      <button class="icon-btn" id="btnCloseResult" type="button">✕</button>
+      <button type="button" class="icon-btn" id="btnCloseResult">✕</button>
     </div>
     <div id="resultBody"></div>
   </section>
@@ -135,7 +227,7 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
   <section class="card" id="formCard" hidden>
     <div class="card-head">
       <h2 id="formTitle">➕ Novo produto</h2>
-      <button class="icon-btn" id="btnCloseForm" type="button">✕</button>
+      <button type="button" class="icon-btn" id="btnCloseForm">✕</button>
     </div>
     <div class="row" style="flex-direction:column;gap:8px">
       <input id="fCodigo" class="input" placeholder="Código de barras *" inputmode="numeric">
@@ -174,7 +266,7 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
       </label>
       <button type="button" id="btnReset" class="btn danger">🗑️ Apagar personalizados</button>
     </div>
-    <p class="note">As fotos ficam no IndexedDB (armazenamento do dispositivo), separadas do JSON.</p>
+    <p class="note">As fotos ficam no IndexedDB do aparelho, separadas do JSON.</p>
   </section>
 
 </main>
@@ -259,7 +351,6 @@ let custom={}, db=null, scanner=null, scannerFile=null;
 let scannerRodando=false, torchOn=false;
 let ultimoCodigo=null, ultimoTempo=0, editandoCodigo=null;
 const IMG_CACHE=new Map();
-
 const $=id=>document.getElementById(id);
 
 /* =====================================================================
@@ -275,43 +366,41 @@ function beep(){try{const C=window.AudioContext||window.webkitAudioContext;const
 function vibrar(ms=90){if(navigator.vibrate){try{navigator.vibrate(ms);}catch(e){}}}
 
 /* =====================================================================
-   DIAGNÓSTICO — mostra o status da câmera e do contexto
+   DIAGNÓSTICO
    ===================================================================== */
 function atualizarDiagnostico(){
   const proto=location.protocol;
   const seguro=(proto==="https:"||location.hostname==="localhost"||location.hostname==="127.0.0.1");
   const temMedia=!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia);
   const temLib=typeof Html5Qrcode!=="undefined";
-  const temBarcode="BarcodeDetector" in window;
   const temIDB=!!window.indexedDB;
 
   const linhas=[
     `Protocolo: <b>${esc(proto)}</b> ${seguro?'<span class="ok">✓ seguro</span>':'<span class="bad">✗ bloqueia câmera</span>'}`,
     `getUserMedia: ${temMedia?'<span class="ok">✓ disponível</span>':'<span class="bad">✗ ausente</span>'}`,
-    `Biblioteca scanner: ${temLib?'<span class="ok">✓ carregada</span>':'<span class="warn">… carregando</span>'}`,
-    `BarcodeDetector nativo: ${temBarcode?'<span class="ok">✓ suportado</span>':'<span class="warn">— usa JS</span>'}`,
+    `Biblioteca scanner: ${temLib?'<span class="ok">✓ carregada</span>':'<span class="warn">… aguardando</span>'}`,
     `IndexedDB (fotos): ${temIDB?'<span class="ok">✓ ok</span>':'<span class="bad">✗ indisponível</span>'}`
   ];
   $("diag").innerHTML=linhas.join("<br>");
 
-  // Alerta visível se houver problema grave
   const al=$("alerta");
   if(proto==="file:"){
     al.className="alerta warn show";
-    al.innerHTML="⚠️ <b>Você abriu este arquivo diretamente (file://).</b> O navegador bloqueia o acesso à câmera nesse modo.<br><br>Use uma destas opções:<br>• <b>Ler de imagem</b> (botão 🖼️) — funciona sempre<br>• <b>Digitar o código</b> manualmente<br>• Hospedar em <b>HTTPS</b> ou <b>localhost</b> para usar a câmera";
+    al.innerHTML="⚠️ <b>Você abriu o arquivo direto (file://).</b> O navegador bloqueia a câmera nesse modo.<br>Use <b>🖼️ Ler de imagem</b> ou digite o código. Para usar a câmera, hospede em <b>GitHub Pages</b> (HTTPS).";
   } else if(!temMedia){
     al.className="alerta err show";
-    al.innerHTML="❌ <b>Este navegador não expõe a API de câmera.</b> Use Chrome, Edge ou Safari atualizados.";
+    al.innerHTML="❌ <b>Este navegador não expõe câmera.</b> Use Chrome, Edge ou Safari atualizados.";
   } else if(!seguro){
     al.className="alerta warn show";
     al.innerHTML="⚠️ <b>Conexão não segura.</b> A câmera só funciona em HTTPS ou localhost.";
   } else {
-    al.className="alerta";
+    al.className="alerta info show";
+    al.innerHTML="✅ <b>Ambiente OK.</b> Você pode usar a câmera normalmente.";
   }
 }
 
 /* =====================================================================
-   CARREGAMENTO ROBUSTO DA BIBLIOTECA (3 CDNs + fallback)
+   CARREGAMENTO DA BIBLIOTECA (3 CDNs)
    ===================================================================== */
 let carregandoLib=null;
 function carregarBiblioteca(){
@@ -336,13 +425,12 @@ function carregarBiblioteca(){
           document.head.appendChild(s);
         });
         if(ok&&typeof Html5Qrcode!=="undefined"){
-          console.log("[BarScan] Biblioteca carregada de:",url);
+          console.log("[BarScan] Biblioteca carregada:",url);
           atualizarDiagnostico();
           return true;
         }
-      }catch(e){console.warn("Falha CDN:",url,e);}
+      }catch(e){console.warn("CDN falhou:",url,e);}
     }
-    console.error("[BarScan] Não foi possível carregar html5-qrcode de nenhum CDN.");
     atualizarDiagnostico();
     return false;
   })();
@@ -350,7 +438,7 @@ function carregarBiblioteca(){
 }
 
 /* =====================================================================
-   INDEXEDDB — imagens
+   INDEXEDDB
    ===================================================================== */
 function req2p(r){return new Promise((res,rej)=>{r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
 function abrirDB(){
@@ -459,7 +547,7 @@ function mostrarResultado(produto,codigoLido){
       <div class="result-top">
         <div class="thumb" style="cursor:default">❓</div>
         <div class="res-info">
-          <div class="cat" style="color:var(--danger)">Não encontrado</div>
+          <div class="cat" style="color:#c92a2a">Não encontrado</div>
           <h3>Produto não cadastrado</h3>
           <div class="cod">${esc(codigoLido)}</div>
         </div>
@@ -524,36 +612,33 @@ function onScanSuccess(texto){
 async function iniciarScanner(){
   if(scannerRodando)return;
 
-  // 1) Verifica contexto seguro
   if(location.protocol==="file:"){
     mostrarErroReader("Arquivo aberto localmente (file://)",
-      "O navegador bloqueia a câmera neste modo por segurança.",
-      'Use o botão <b>🖼️ Ler de imagem</b> ou <b>digite o código</b>.<br>Para usar a câmera, hospede o arquivo em HTTPS ou localhost.');
+      "O navegador bloqueia a câmera neste modo.",
+      'Use <b>🖼️ Ler de imagem</b> ou digite o código. Para a câmera, hospede em GitHub Pages (HTTPS).');
     toast("Câmera bloqueada em file://","err");
     return;
   }
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
     mostrarErroReader("API de câmera indisponível",
-      "Este navegador/contexto não expõe getUserMedia.",
-      "Tente no Chrome, Edge ou Safari atualizado, em HTTPS.");
+      "Este navegador não expõe getUserMedia.",
+      "Use Chrome, Edge ou Safari atualizado, em HTTPS.");
     toast("Sem suporte a câmera","err");
     return;
   }
 
-  // 2) Carrega biblioteca (com fallback entre CDNs)
   setStatus("carregando...",true);
-  $("reader").innerHTML=`<div class="ph"><span>⏳</span>Carregando leitor de código de barras...</div>`;
+  $("reader").innerHTML=`<div class="ph"><span>⏳</span>Carregando leitor...</div>`;
   const ok=await carregarBiblioteca();
   if(!ok){
     mostrarErroReader("Biblioteca não carregou",
-      "Não foi possível baixar html5-qrcode de nenhum CDN.",
-      "Verifique sua internet e tente novamente.<br>Enquanto isso, use <b>🖼️ Ler de imagem</b> ou o campo manual.");
+      "Não foi possível baixar o leitor de nenhum CDN.",
+      "Verifique a internet e tente novamente.<br>Use <b>🖼️ Ler de imagem</b> ou o campo manual.");
     setStatus("erro",false);
     toast("Falha ao carregar biblioteca","err");
     return;
   }
 
-  // 3) Inicia câmera
   try{
     $("reader").innerHTML="";
     if(scanner){try{await scanner.clear();}catch(e){}}
@@ -579,11 +664,11 @@ async function iniciarScanner(){
     $("btnTorch").disabled=false;
     toast("Câmera ativa — aponte para o código","ok");
   }catch(err){
-    console.error("[BarScan] Erro ao iniciar câmera:",err);
+    console.error("[BarScan] erro câmera:",err);
     const msg=String(err&&err.message?err.message:err);
     let dica="";
-    if(/NotAllowed|Permission/i.test(msg))dica="Permissão negada. Autorize a câmera nas configurações do navegador.";
-    else if(/NotFound|Devices/i.test(msg))dica="Nenhuma câmera encontrada neste dispositivo.";
+    if(/NotAllowed|Permission/i.test(msg))dica="Permissão negada. Autorize a câmera no navegador.";
+    else if(/NotFound|Devices/i.test(msg))dica="Nenhuma câmera encontrada.";
     else if(/NotReadable|Track/i.test(msg))dica="A câmera está em uso por outro app.";
     else if(/secure|https/i.test(msg))dica="É necessário HTTPS ou localhost.";
     else dica="Tente novamente ou use a leitura por imagem.";
@@ -600,9 +685,9 @@ function mostrarErroReader(titulo,detalhe,acao){
   $("reader").innerHTML=`
     <div class="ph">
       <span>⚠️</span>
-      <b style="color:var(--danger)">${esc(titulo)}</b><br>
-      <small style="opacity:.85">${esc(detalhe)}</small>
-      ${acao?`<br><br><small style="opacity:.95">${acao}</small>`:""}
+      <b style="color:#c92a2a;font-size:15px">${esc(titulo)}</b><br>
+      <small style="color:#5b6472">${esc(detalhe)}</small>
+      ${acao?`<br><br><small style="color:#111827">${acao}</small>`:""}
     </div>`;
 }
 
@@ -656,8 +741,8 @@ function capturarFoto(codigo){
       renderLista();renderStats();
       const p=buscarPorCodigo(codigoParaFoto);
       if(p&&!$("resultCard").hidden)mostrarResultado(p,codigoParaFoto);
-      toast("📷 Foto salva no dispositivo","ok");
-    }catch(e){console.error(e);toast("Erro ao salvar a foto","err");}
+      toast("📷 Foto salva","ok");
+    }catch(e){console.error(e);toast("Erro ao salvar foto","err");}
   };
   inp.click();
 }
@@ -704,7 +789,7 @@ function salvarForm(){
   const volume=$("fVolume").value.trim();
   const cat=$("fCategoria").value;
   const preco=parseFloat(String($("fPreco").value).replace(",","."))||0;
-  if(!codigo){toast("Informe o código de barras","err");return;}
+  if(!codigo){toast("Informe o código","err");return;}
   if(!descricao){toast("Informe a descrição","err");return;}
   custom[codigo]={codigo,descricao,marca,volume,categoria:cat,preco};
   salvarCustom();fecharForm();renderLista();renderStats();
@@ -816,10 +901,9 @@ $("lista").addEventListener("click",async e=>{
   renderStats();renderLista();setStatus("parado",false);
   atualizarDiagnostico();
 
-  // Pré-carrega a biblioteca em segundo plano (não bloqueia)
   if(location.protocol!=="file:"){
     carregarBiblioteca().then(ok=>{
-      console.log("[BarScan] biblioteca pronta:",ok);
+      console.log("[BarScan] biblioteca:",ok);
       atualizarDiagnostico();
     });
   }
