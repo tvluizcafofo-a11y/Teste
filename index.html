@@ -125,6 +125,12 @@ select.input{appearance:none;
 .alerta.warn{background:#fff3e0;border:2px solid #e85d04;color:#7a3300}
 .alerta.err{background:#fdecec;border:2px solid #c92a2a;color:#7a0f0f}
 .alerta.info{background:#e6f0fd;border:2px solid #1c64d1;color:#0d3a80}
+.debug{background:#1e293b;color:#e2e8f0;border-radius:10px;padding:12px;
+  font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.7;
+  margin-top:10px;max-height:200px;overflow-y:auto;white-space:pre-wrap;word-break:break-all}
+.debug .hi{color:#fbbf24;font-weight:700}
+.debug .ok{color:#34d399}
+.debug .err{color:#f87171}
 </style>
 </head>
 <body>
@@ -172,6 +178,11 @@ select.input{appearance:none;
       <input id="manualInput" class="input" inputmode="numeric" autocomplete="off" placeholder="Ou digite o código manualmente...">
       <button type="button" id="btnManual" class="btn accent">Buscar</button>
     </div>
+
+    <div class="row" style="margin-top:8px">
+      <button type="button" id="btnDebug" class="btn" style="font-size:13px">🔬 Diagnóstico de busca</button>
+    </div>
+    <div id="debugBox" class="debug" hidden></div>
 
     <div class="diag" id="diag"></div>
   </section>
@@ -352,27 +363,43 @@ function beep(){try{const C=window.AudioContext||window.webkitAudioContext;const
 function vibrar(ms=90){if(navigator.vibrate){try{navigator.vibrate(ms);}catch(e){}}}
 
 /* =====================================================================
-   VALIDAÇÃO DE CÓDIGO DE BARRAS
+   NORMALIZAÇÃO ROBUSTA DO CÓDIGO
    ---------------------------------------------------------------------
-   Códigos de balança de supermercado no Brasil começam com "2"
-   (padrão EAN-13 interno da loja). NÃO são códigos de produto e por
-   isso não devem ser buscados na base.
+   O scanner pode retornar o código com espaços, quebras de linha ou
+   caracteres invisíveis. Esta função remove tudo e retorna apenas
+   dígitos ou "INT-xxx".
+   ===================================================================== */
+function normalizarCodigo(raw){
+  if(raw==null) return "";
+  let c = String(raw).trim();
+  // Remove caracteres invisíveis (BOM, zero-width, etc.)
+  c = c.replace(/[\u200B-\u200D\uFEFF]/g, "");
+  // Remove espaços internos
+  c = c.replace(/\s+/g, "");
+  // Se for um código interno INT-xxx, mantém
+  if(/^INT-/i.test(c)) return c.toUpperCase();
+  // Senão, mantém apenas dígitos
+  c = c.replace(/\D/g, "");
+  return c;
+}
+
+/* =====================================================================
+   VALIDAÇÃO DE CÓDIGO DE BARRAS
    ===================================================================== */
 function ehCodigoDeBalança(codigo){
-  const c=String(codigo).trim();
-  // EAN-13 começando com 2 = código interno de balança
-  if(/^2\d{12}$/.test(c)) return true;
-  // EAN-13 com prefixo 20-29 (faixa reservada para uso interno)
-  if(/^2\d{11,12}$/.test(c)) return true;
-  return false;
+  const c=normalizarCodigo(codigo);
+  return /^2\d{11,12}$/.test(c);
 }
 
 function validarCodigo(codigo){
-  const c=String(codigo).trim();
+  const c=normalizarCodigo(codigo);
   if(!c) return {ok:false, motivo:"Código vazio"};
   if(ehCodigoDeBalança(c)){
     return {ok:false, balanca:true, motivo:
       "Este código começa com 2 e tem formato de etiqueta de BALANÇA de supermercado, não de produto. Aponte a câmera para o código de barras impresso na embalagem/garrafa."};
+  }
+  if(c.length<8 && !/^INT-/i.test(c)){
+    return {ok:false, motivo:"Código muito curto ("+c.length+" dígitos). Códigos válidos têm 8, 12 ou 13 dígitos."};
   }
   return {ok:true};
 }
@@ -382,33 +409,100 @@ function validarCodigo(codigo){
    ===================================================================== */
 function atualizarDiagnostico(){
   const proto=location.protocol;
-  const seguro=(proto==="https:"||location.hostname==="localhost"||location.hostname==="127.0.0.1");
+  const seguro=(proto==="https:"||proto==="file:"||location.hostname==="localhost"||location.hostname==="127.0.0.1");
   const temMedia=!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia);
   const temLib=typeof Html5Qrcode!=="undefined";
   const temIDB=!!window.indexedDB;
 
   const linhas=[
-    `Protocolo: <b>${esc(proto)}</b> ${seguro?'<span class="ok">✓ seguro</span>':'<span class="bad">✗ bloqueia câmera</span>'}`,
+    `Protocolo: <b>${esc(proto)}</b>`,
     `getUserMedia: ${temMedia?'<span class="ok">✓ disponível</span>':'<span class="bad">✗ ausente</span>'}`,
     `Biblioteca scanner: ${temLib?'<span class="ok">✓ carregada</span>':'<span class="warn">… aguardando</span>'}`,
-    `IndexedDB (fotos): ${temIDB?'<span class="ok">✓ ok</span>':'<span class="bad">✗ indisponível</span>'}`
+    `IndexedDB (fotos): ${temIDB?'<span class="ok">✓ ok</span>':'<span class="bad">✗ indisponível</span>'}`,
+    `Produtos na base: <span class="ok">${PRODUTOS_DB.length}</span>`
   ];
   $("diag").innerHTML=linhas.join("<br>");
 
   const al=$("alerta");
   if(proto==="file:"){
     al.className="alerta warn show";
-    al.innerHTML="⚠️ <b>Você abriu o arquivo direto (file://).</b> O navegador bloqueia a câmera nesse modo.<br>Use <b>🖼️ Ler de imagem</b> ou digite o código. Para usar a câmera, hospede em <b>GitHub Pages</b> (HTTPS).";
+    al.innerHTML="⚠️ <b>Arquivo aberto localmente (file://).</b> A câmera pode estar bloqueada.<br>Use <b>🖼️ Ler de imagem</b> ou digite o código. Para a câmera completa, hospede em HTTPS.";
   } else if(!temMedia){
     al.className="alerta err show";
     al.innerHTML="❌ <b>Este navegador não expõe câmera.</b> Use Chrome, Edge ou Safari atualizados.";
-  } else if(!seguro){
-    al.className="alerta warn show";
-    al.innerHTML="⚠️ <b>Conexão não segura.</b> A câmera só funciona em HTTPS ou localhost.";
   } else {
     al.className="alerta info show";
-    al.innerHTML="✅ <b>Ambiente OK.</b> Você pode usar a câmera normalmente.";
+    al.innerHTML="✅ <b>Ambiente OK.</b> Use a câmera ou digite o código.";
   }
+}
+
+/* =====================================================================
+   PAINEL DE DEBUG — mostra o que está sendo lido e comparado
+   ===================================================================== */
+function debugLog(msg,classe=""){
+  const box=$("debugBox");
+  box.hidden=false;
+  const lin=document.createElement("div");
+  if(classe) lin.className=classe;
+  lin.textContent=msg;
+  box.appendChild(lin);
+  box.scrollTop=box.scrollHeight;
+}
+
+function executarDiagnostico(){
+  const box=$("debugBox");
+  box.innerHTML="";
+  box.hidden=false;
+
+  debugLog("=== DIAGNÓSTICO DE BUSCA ===\n","hi");
+  debugLog("Total de produtos na base: "+PRODUTOS_DB.length);
+  debugLog("Produtos personalizados: "+Object.keys(custom).length);
+  debugLog("");
+
+  // Mostra os 5 primeiros códigos da base
+  debugLog("--- Primeiros 5 códigos da base (com tipo) ---","hi");
+  PRODUTOS_DB.slice(0,5).forEach(p=>{
+    debugLog(`  "${p.codigo}" (${typeof p.codigo}, len=${String(p.codigo).length}) → ${p.descricao}`);
+  });
+  debugLog("");
+
+  // Testa busca com códigos conhecidos
+  debugLog("--- Teste de busca com códigos conhecidos ---","hi");
+  const testes=["7894900010015","7891149200504","7891991000826","7891149010103"];
+  testes.forEach(c=>{
+    const found=PRODUTOS_DB.find(x=>String(x.codigo)===String(c));
+    if(found){
+      debugLog(`  ✓ "${c}" ENCONTRADO: ${found.descricao}`,"ok");
+    } else {
+      debugLog(`  ✗ "${c}" NÃO ENCONTRADO`,"err");
+    }
+  });
+  debugLog("");
+
+  // Mostra o último código lido
+  if(ultimoCodigo){
+    debugLog("--- Último código lido ---","hi");
+    debugLog(`  Raw: "${ultimoCodigo}"`);
+    debugLog(`  Normalizado: "${normalizarCodigo(ultimoCodigo)}"`);
+    debugLog(`  Tipo: ${typeof ultimoCodigo}, len=${String(ultimoCodigo).length}`);
+    const norm=normalizarCodigo(ultimoCodigo);
+    const found=PRODUTOS_DB.find(x=>String(x.codigo)===norm);
+    if(found){
+      debugLog(`  ✓ Encontrado na base: ${found.descricao}`,"ok");
+    } else {
+      debugLog(`  ✗ NÃO encontrado na base`,"err");
+      // Tenta encontrar códigos parecidos
+      const parecidos=PRODUTOS_DB.filter(x=>String(x.codigo).includes(norm)||norm.includes(String(x.codigo)));
+      if(parecidos.length){
+        debugLog(`  Códigos similares na base:`,"warn");
+        parecidos.forEach(p=>debugLog(`    "${p.codigo}" → ${p.descricao}`,"warn"));
+      }
+    }
+  } else {
+    debugLog("Nenhum código foi lido ainda.","warn");
+  }
+  debugLog("");
+  debugLog("--- Fim do diagnóstico ---","hi");
 }
 
 /* =====================================================================
@@ -484,7 +578,11 @@ async function recarregarCacheImagens(){
 }
 
 /* =====================================================================
-   BASE DE DADOS
+   BASE DE DADOS — BUSCA CORRIGIDA
+   ---------------------------------------------------------------------
+   A busca agora normaliza AMBOS os lados (código do banco e código
+   digitado/escaneado) antes de comparar. Isso resolve problemas de
+   espaços, zeros à esquerda e caracteres invisíveis.
    ===================================================================== */
 function carregarCustom(){try{custom=JSON.parse(localStorage.getItem(LS_CUSTOM)||"{}")||{};}catch(e){custom={};}}
 function salvarCustom(){localStorage.setItem(LS_CUSTOM,JSON.stringify(custom));}
@@ -494,11 +592,30 @@ function todosProdutos(){
   Object.values(custom).forEach(p=>m.set(String(p.codigo),{...p,_custom:true}));
   return Array.from(m.values());
 }
-function buscarPorCodigo(c){
-  c=String(c).trim();
-  if(custom[c])return{...custom[c],_custom:true};
-  const p=PRODUTOS_DB.find(x=>String(x.codigo)===c);
-  return p?{...p,_custom:false}:null;
+
+function buscarPorCodigo(codigoRaw){
+  const alvo = normalizarCodigo(codigoRaw);
+  if(!alvo) return null;
+
+  // 1) Busca nos personalizados (comparação normalizada)
+  for(const k of Object.keys(custom)){
+    if(normalizarCodigo(k) === alvo){
+      return {...custom[k], _custom:true};
+    }
+  }
+
+  // 2) Busca na base embutida (comparação normalizada)
+  for(const p of PRODUTOS_DB){
+    if(normalizarCodigo(p.codigo) === alvo){
+      return {...p, _custom:false};
+    }
+  }
+
+  // 3) Fallback: comparação exata de string (caso normalização falhe)
+  const exato = PRODUTOS_DB.find(x => String(x.codigo) === String(codigoRaw).trim());
+  if(exato) return {...exato, _custom:false};
+
+  return null;
 }
 
 /* =====================================================================
@@ -585,18 +702,23 @@ function mostrarResultado(produto,codigoLido,avisoBalanca){
   }
 
   if(!produto){
+    const norm=normalizarCodigo(codigoLido);
     body.innerHTML=`
       <div class="result-top">
         <div class="thumb" style="cursor:default">❓</div>
         <div class="res-info">
           <div class="cat" style="color:#c92a2a">Não encontrado</div>
           <h3>Produto não cadastrado</h3>
-          <div class="cod">${esc(codigoLido)}</div>
+          <div class="cod">${esc(norm||codigoLido)}</div>
         </div>
       </div>
-      <div class="row"><button type="button" class="btn primary" id="btnCadastrarAgora">➕ Cadastrar este código</button></div>
-      <p class="note">Confira se o código lido é o correto (deve ter 8, 12 ou 13 dígitos e <b>não</b> começar com 2).</p>`;
-    $("btnCadastrarAgora").onclick=()=>abrirForm(null,codigoLido);
+      <p class="note">O código foi lido corretamente (<b>${esc(norm)}</b>, ${norm.length} dígitos), mas não está na base.</p>
+      <div class="row">
+        <button type="button" class="btn primary" id="btnCadastrarAgora">➕ Cadastrar este código</button>
+        <button type="button" class="btn" id="btnDebugAgora">🔬 Diagnóstico</button>
+      </div>`;
+    $("btnCadastrarAgora").onclick=()=>abrirForm(null,norm);
+    $("btnDebugAgora").onclick=executarDiagnostico;
     card.scrollIntoView({behavior:"smooth",block:"center"});
     return;
   }
@@ -633,20 +755,33 @@ function mostrarResultado(produto,codigoLido,avisoBalanca){
 }
 
 function buscar(codigo){
-  const limpo=String(codigo).trim();
-  if(!limpo){toast("Informe um código","err");return;}
+  const norm=normalizarCodigo(codigo);
+  if(!norm){toast("Informe um código","err");return;}
 
-  const v=validarCodigo(limpo);
+  debugLog(`Busca: raw="${codigo}" → norm="${norm}" (len=${norm.length})`);
+
+  const v=validarCodigo(norm);
   if(!v.ok && v.balanca){
-    mostrarResultado(null,limpo,true);
+    mostrarResultado(null,norm,true);
     toast("⚖️ Etiqueta de balança — não é produto","warn");
+    debugLog(`  → BLOQUEADO: etiqueta de balança`,"err");
     return;
   }
-  if(!v.ok){toast(v.motivo,"err");return;}
+  if(!v.ok){
+    toast(v.motivo,"err");
+    debugLog(`  → BLOQUEADO: ${v.motivo}`,"err");
+    return;
+  }
 
-  const p=buscarPorCodigo(limpo);
-  mostrarResultado(p,limpo,false);
-  if(p)toast("✅ "+p.descricao,"ok");else toast("Produto não encontrado","err");
+  const p=buscarPorCodigo(norm);
+  mostrarResultado(p,norm,false);
+  if(p){
+    toast("✅ "+p.descricao,"ok");
+    debugLog(`  → ENCONTRADO: ${p.descricao}`,"ok");
+  } else {
+    toast("Produto não encontrado","err");
+    debugLog(`  → NÃO ENCONTRADO na base`,"err");
+  }
 }
 
 /* =====================================================================
@@ -659,14 +794,16 @@ function onScanSuccess(texto){
   if(texto===ultimoCodigo&&agora-ultimoTempo<3000)return;
   ultimoCodigo=texto;ultimoTempo=agora;
 
-  // Verifica se é balança antes de bipar (evita bipe desnecessário)
-  const v=validarCodigo(texto);
+  const norm=normalizarCodigo(texto);
+  debugLog(`Scan: "${texto}" → "${norm}"`);
+
+  const v=validarCodigo(norm);
   if(!v.ok && v.balanca){
     vibrar(200);
-    buscar(texto);
+    buscar(norm);
     return;
   }
-  beep();vibrar(110);buscar(texto);
+  beep();vibrar(110);buscar(norm);
 }
 
 async function iniciarScanner(){
@@ -674,10 +811,10 @@ async function iniciarScanner(){
 
   if(location.protocol==="file:"){
     mostrarErroReader("Arquivo aberto localmente (file://)",
-      "O navegador bloqueia a câmera neste modo.",
-      'Use <b>🖼️ Ler de imagem</b> ou digite o código. Para a câmera, hospede em GitHub Pages (HTTPS).');
-    toast("Câmera bloqueada em file://","err");
-    return;
+      "O navegador pode bloquear a câmera neste modo.",
+      'Use <b>🖼️ Ler de imagem</b> ou digite o código.');
+    toast("Câmera pode estar bloqueada","warn");
+    // Não retorna — tenta mesmo assim
   }
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
     mostrarErroReader("API de câmera indisponível",
@@ -779,9 +916,10 @@ async function lerDeImagem(file){
     if(!scannerFile)scannerFile=new Html5Qrcode("reader-file",{verbose:false});
     toast("Analisando imagem...");
     const res=await scannerFile.scanFile(file,false);
+    debugLog(`Imagem: "${res}" → "${normalizarCodigo(res)}"`);
     const v=validarCodigo(res);
-    if(!v.ok && v.balanca){vibrar(200);buscar(res);return;}
-    beep();vibrar();buscar(res);
+    if(!v.ok && v.balanca){vibrar(200);buscar(normalizarCodigo(res));return;}
+    beep();vibrar();buscar(normalizarCodigo(res));
   }catch(e){console.error(e);toast("Nenhum código encontrado na imagem","err");}
 }
 
@@ -845,7 +983,7 @@ function abrirForm(produto,codigoPre){
 }
 function fecharForm(){$("formCard").hidden=true;editandoCodigo=null;$("fCodigo").disabled=false;}
 function salvarForm(){
-  const codigo=$("fCodigo").value.trim();
+  const codigo=normalizarCodigo($("fCodigo").value);
   const descricao=$("fDescricao").value.trim();
   const marca=$("fMarca").value.trim();
   const volume=$("fVolume").value.trim();
@@ -882,7 +1020,8 @@ function importarJSON(file){
       let n=0;
       arr.forEach(p=>{
         if(p&&p.codigo&&p.descricao){
-          custom[String(p.codigo)]={codigo:String(p.codigo),descricao:String(p.descricao),marca:p.marca||"",volume:p.volume||"",categoria:p.categoria||"Outros",preco:Number(p.preco)||0};
+          const c=normalizarCodigo(p.codigo);
+          custom[c]={codigo:c,descricao:String(p.descricao),marca:p.marca||"",volume:p.volume||"",categoria:p.categoria||"Outros",preco:Number(p.preco)||0};
           n++;
         }
       });
@@ -918,6 +1057,7 @@ $("search").addEventListener("input",renderLista);
 $("filterCat").addEventListener("change",renderLista);
 $("btnExport").addEventListener("click",exportarJSON);
 $("importInput").addEventListener("change",e=>{importarJSON(e.target.files[0]);e.target.value="";});
+$("btnDebug").addEventListener("click",executarDiagnostico);
 $("btnReset").addEventListener("click",()=>{
   if(!Object.keys(custom).length){toast("Nada para apagar","err");return;}
   if(confirm("Apagar TODOS os produtos personalizados? As fotos também serão removidas.")){
@@ -956,6 +1096,14 @@ $("lista").addEventListener("click",async e=>{
    ===================================================================== */
 (async function init(){
   console.log("[BarScan] init — protocolo:",location.protocol);
+  console.log("[BarScan] base carregada:",PRODUTOS_DB.length,"produtos");
+  // Log de verificação dos códigos
+  console.log("[BarScan] verificando códigos...");
+  ["7894900010015","7891149200504","7891991000826","7891149010103"].forEach(c=>{
+    const f=PRODUTOS_DB.find(x=>String(x.codigo)===c);
+    console.log("  "+c+" → "+(f?f.descricao:"NÃO ENCONTRADO"));
+  });
+
   preencherCategorias();
   carregarCustom();
   try{await abrirDB();await recarregarCacheImagens();}
